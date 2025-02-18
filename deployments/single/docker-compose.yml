@@ -7,15 +7,6 @@ services:
         networks:
             - ragapp-network
 
-    #   ollama:
-    #     image: ollama/ollama:latest
-    #     ports:
-    #       - 11434:11434
-    #     volumes:
-    #       - ./ollama:/root/.ollama
-    #     networks:
-    #       - ragapp-network
-
     setup:
         image: curlimages/curl:latest
         networks:
@@ -23,20 +14,19 @@ services:
         volumes:
             - ./scripts:/ragapp
         environment:
-            - MODEL=${MODEL:-phi3:latest}
-            - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+            - MODEL=${MODEL:-gpt-3.5-turbo}
+            - CHATGPT_API_URL=${CHATGPT_API_URL:-https://api.openai.com/v1/engines/davinci-codex/completions}
             - QDRANT_URL=http://qdrant:6333
             - COLLECTION_NAMES=default
             - DISTANCE_METRIC=Cosine
             - VECTOR_SIZE=768
         command: >
             /bin/sh -c
-            "chmod +x /ragapp/create_qdrant_collection.sh /ragapp/setup_ollama.sh &&
+            "chmod +x /ragapp/create_qdrant_collection.sh /ragapp/setup_chatgpt.sh &&
             /ragapp/create_qdrant_collection.sh &&
-            /ragapp/setup_ollama.sh"
+            /ragapp/setup_chatgpt.sh"
         depends_on:
             - qdrant
-            - ollama
 
     ragapp:
         build: ../../src/ragapp
@@ -51,11 +41,11 @@ services:
             - QDRANT_URL=http://qdrant:6333
             - QDRANT_COLLECTION=default
             - QDRANT_API_KEY=""
-            - MODEL_PROVIDER=ollama
-            - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+            - MODEL_PROVIDER=chatgpt
+            - CHATGPT_API_URL=${CHATGPT_API_URL:-https://api.openai.com/v1/engines/davinci-codex/completions}
             - EMBEDDING_MODEL=nomic-embed-text
             - EMBEDDING_DIM=768
-            - MODEL=${MODEL:-phi3:latest}
+            - MODEL=${MODEL:-gpt-3.5-turbo}
             - TRACKING_SCRIPT=${TRACKING_SCRIPT:-}
         depends_on:
             - setup
