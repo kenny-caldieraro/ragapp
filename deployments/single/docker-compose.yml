@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
     qdrant:
         image: qdrant/qdrant:latest
@@ -6,27 +8,6 @@ services:
             - 6334:6334
         networks:
             - ragapp-network
-
-    setup:
-        image: curlimages/curl:latest
-        networks:
-            - ragapp-network
-        volumes:
-            - ./scripts:/ragapp
-        environment:
-            - MODEL=${MODEL:-gpt-3.5-turbo}
-            - CHATGPT_API_URL=${CHATGPT_API_URL:-https://api.openai.com/v1/engines/davinci-codex/completions}
-            - QDRANT_URL=http://qdrant:6333
-            - COLLECTION_NAMES=default
-            - DISTANCE_METRIC=Cosine
-            - VECTOR_SIZE=768
-        command: >
-            /bin/sh -c
-            "chmod +x /ragapp/create_qdrant_collection.sh /ragapp/setup_chatgpt.sh &&
-            /ragapp/create_qdrant_collection.sh &&
-            /ragapp/setup_chatgpt.sh"
-        depends_on:
-            - qdrant
 
     ragapp:
         build: ../../src/ragapp
@@ -41,19 +22,19 @@ services:
             - QDRANT_URL=http://qdrant:6333
             - QDRANT_COLLECTION=default
             - QDRANT_API_KEY=""
-            - MODEL_PROVIDER=chatgpt
-            - CHATGPT_API_URL=${CHATGPT_API_URL:-https://api.openai.com/v1/engines/davinci-codex/completions}
-            - EMBEDDING_MODEL=nomic-embed-text
-            - EMBEDDING_DIM=768
-            - MODEL=${MODEL:-gpt-3.5-turbo}
+            - MODEL_PROVIDER=openai
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - OPENAI_API_BASE=${OPENAI_API_BASE:-https://api.openai.com/v1}
+            - EMBEDDING_MODEL=text-embedding-ada-002
+            - EMBEDDING_DIM=1536
+            - MODEL=${MODEL:-gpt-4-turbo}
             - TRACKING_SCRIPT=${TRACKING_SCRIPT:-}
         depends_on:
-            - setup
+            - qdrant
         networks:
             - ragapp-network
 
 networks:
     ragapp-network:
         name: ragapp-network
-        # Set as an external network to avoid conflicts.
         external: true
